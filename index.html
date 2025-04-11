@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>משחק כפל</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      text-align: center;
+      background-color: #fff8dc;
+      direction: rtl;
+      color: #333;
+    }
+    #container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      color: #ff6347;
+    }
+    button {
+      margin: 10px;
+      padding: 15px 20px;
+      font-size: 1.2em;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+      background-color: #87cefa;
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #00bfff;
+    }
+    #answers button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+    }
+    #progress-bar {
+      margin: 10px 0;
+      height: 25px;
+      background: #eee;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    #progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, #4caf50, #8bc34a);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    #next-btn {
+      display: none;
+      margin-top: 20px;
+      background-color: #ffa500;
+    }
+    .correct {
+      background-color: #4caf50 !important;
+      color: white;
+    }
+    .incorrect {
+      background-color: #f44336 !important;
+      color: white;
+    }
+    input[type="text"] {
+      font-size: 1.2em;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+    #question {
+      font-size: 1.6em;
+      margin: 20px 0;
+    }
+    #emoji-face {
+      font-size: 2em;
+      margin-top: 10px;
+    }
+    #feedback {
+      font-size: 1.2em;
+      color: #333;
+      margin-top: 10px;
+    }
+    #contact-info {
+      margin-top: 30px;
+      padding: 10px;
+      font-size: 1em;
+      color: #333;
+      background-color: #f5f5f5;
+      border-radius: 10px;
+      text-align: center;
+    }
+    #copyright {
+      margin-top: 15px;
+      font-size: 0.9em;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="start-screen">
+      <h1>🎲 משחק תרגול כפל 🎲</h1>
+      <p>👦🏻👧🏼 נא להכניס שם:</p>
+      <input type="text" id="username" />
+      <button onclick="startGame()">התחל משחק</button>
+      
+      <div id="contact-info">
+        להתקשרות, שיעורים פרטיים וקורסים במתמטיקה פנו אליי!<br>
+        עמית: 050-9288879 או במייל amitlegostar@gmail.com
+      </div>
+      
+      <div id="copyright">
+        כל הזכויות שמורות לעמית פסח 2025 ©
+      </div>
+    </div>
+
+    <div id="game-screen" style="display:none;">
+      <h2 id="greeting"></h2>
+      <div id="progress-bar"><div id="progress-fill"></div></div>
+      <div id="question"></div>
+      <div id="answers"></div>
+      <div id="emoji-face"></div>
+      <div id="feedback"></div>
+      <button id="next-btn" onclick="nextQuestion()">➡️ הבא</button>
+    </div>
+
+    <div id="end-screen" style="display:none;">
+      <h2 id="summary"></h2>
+      <button onclick="restartGame()">🔁 התחל מחדש</button>
+    </div>
+  </div>
+
+  <script>
+    let name = '';
+    let score = 0;
+    let totalQuestions = 0;
+    const MAX_QUESTIONS = 20;
+    let answered = false;
+    let currentCorrectAnswer = null;
+
+    function startGame() {
+      name = document.getElementById('username').value.trim();
+      if (!name) return alert('נא להכניס שם');
+      
+      score = 0;
+      totalQuestions = 0;
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      document.getElementById('greeting').textContent = `בהצלחה ${name}! 🎉`; 
+      updateProgressBar();
+      generateQuestion();
+    }
+
+    function restartGame() {
+      document.getElementById('end-screen').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'block';
+      document.getElementById('username').value = '';
+    }
+
+    function generateQuestion() {
+      const a = Math.floor(Math.random() * 10) + 1;
+      const b = Math.floor(Math.random() * 10) + 1;
+      currentCorrectAnswer = a * b;
+      const answers = [currentCorrectAnswer];
+
+      while (answers.length < 4) {
+        const wrong = Math.floor(Math.random() * 100) + 1;
+        if (!answers.includes(wrong)) answers.push(wrong);
+      }
+
+      answers.sort(() => Math.random() - 0.5);
+
+      document.getElementById('question').textContent = `❓ כמה זה ${a} כפול ${b}?`;
+      document.getElementById('emoji-face').textContent = '';
+      document.getElementById('feedback').textContent = '';
+      const answersDiv = document.getElementById('answers');
+      answersDiv.innerHTML = '';
+
+      answers.forEach(ans => {
+        const btn = document.createElement('button');
+        btn.textContent = ans;
+        btn.onclick = () => handleAnswer(btn, ans);
+        answersDiv.appendChild(btn);
+      });
+
+      document.getElementById('next-btn').style.display = 'none';
+      answered = false;
+    }
+
+    function handleAnswer(button, selected) {
+      if (answered) return;
+      answered = true;
+      const buttons = document.querySelectorAll('#answers button');
+      buttons.forEach(btn => {
+        const val = parseInt(btn.textContent);
+        if (val === currentCorrectAnswer) {
+          btn.classList.add('correct');
+        } else if (val === selected) {
+          btn.classList.add('incorrect');
+        }
+      });
+      
+      if (selected === currentCorrectAnswer) {
+        score++;
+        document.getElementById('emoji-face').textContent = '🎉 כל הכבוד!';
+        document.getElementById('feedback').textContent = `נכון! ${selected} הוא התשובה הנכונה.`;
+      } else {
+        document.getElementById('emoji-face').textContent = '😕 לא נורא';
+        document.getElementById('feedback').textContent = `לא נכון. התשובה הנכונה היא ${currentCorrectAnswer}.`;
+      }
+      document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      totalQuestions++;
+      updateProgressBar();
+      if (totalQuestions >= MAX_QUESTIONS) {
+        showEndScreen();
+      } else {
+        generateQuestion();
+      }
+    }
+
+    function updateProgressBar() {
+      const progress = (totalQuestions / MAX_QUESTIONS) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+    }
+
+    function showEndScreen() {
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('end-screen').style.display = 'block';
+      document.getElementById('summary').textContent = `${name}, ענית נכון על ${score} מתוך ${totalQuestions} שאלות! 🌟`;
+    }
+  </script>
+</body>
+</html>
