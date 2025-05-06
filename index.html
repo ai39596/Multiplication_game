@@ -37,11 +37,6 @@
     button:hover {
       background-color: #00bfff;
     }
-    #answers button {
-      display: block;
-      width: 100%;
-      margin: 8px 0;
-    }
     #progress-bar {
       margin: 10px 0;
       height: 25px;
@@ -60,6 +55,10 @@
       margin-top: 20px;
       background-color: #ffa500;
     }
+    #check-btn {
+      margin-top: 10px;
+      background-color: #87cefa;
+    }
     .correct {
       background-color: #4caf50 !important;
       color: white;
@@ -73,6 +72,13 @@
       padding: 10px;
       border-radius: 10px;
       border: 1px solid #ccc;
+    }
+    #answer-input {
+      font-size: 1.4em;
+      padding: 12px;
+      width: 150px;
+      text-align: center;
+      margin-top: 15px;
     }
     #question {
       font-size: 1.6em;
@@ -126,7 +132,13 @@
       <h2 id="greeting"></h2>
       <div id="progress-bar"><div id="progress-fill"></div></div>
       <div id="question"></div>
-      <div id="answers"></div>
+      
+      <!-- Text input for answers -->
+      <div id="answer-section">
+        <input type="text" id="answer-input" inputmode="numeric" />
+        <button id="check-btn" onclick="checkAnswer()">בדוק תשובה</button>
+      </div>
+      
       <div id="emoji-face"></div>
       <div id="feedback"></div>
       <button id="next-btn" onclick="nextQuestion()">➡️ הבא</button>
@@ -145,6 +157,7 @@
     const MAX_QUESTIONS = 20;
     let answered = false;
     let currentCorrectAnswer = null;
+    let currentFactors = { a: 0, b: 0 };
 
     function startGame() {
       name = document.getElementById('username').value.trim();
@@ -168,60 +181,67 @@
     function generateQuestion() {
       const a = Math.floor(Math.random() * 10) + 1;
       const b = Math.floor(Math.random() * 10) + 1;
+      currentFactors = { a, b };
       currentCorrectAnswer = a * b;
-      const answers = [currentCorrectAnswer];
-
-      while (answers.length < 4) {
-        const wrong = Math.floor(Math.random() * 100) + 1;
-        if (!answers.includes(wrong)) answers.push(wrong);
-      }
-
-      answers.sort(() => Math.random() - 0.5);
 
       document.getElementById('question').textContent = `❓ כמה זה ${a} כפול ${b}?`;
       document.getElementById('emoji-face').textContent = '';
       document.getElementById('feedback').textContent = '';
-      const answersDiv = document.getElementById('answers');
-      answersDiv.innerHTML = '';
-
-      answers.forEach(ans => {
-        const btn = document.createElement('button');
-        btn.textContent = ans;
-        btn.onclick = () => handleAnswer(btn, ans);
-        answersDiv.appendChild(btn);
-      });
-
+      document.getElementById('answer-input').value = '';
+      document.getElementById('answer-input').disabled = false;
+      document.getElementById('check-btn').disabled = false;
       document.getElementById('next-btn').style.display = 'none';
+      document.getElementById('answer-input').focus();
       answered = false;
     }
 
-    function handleAnswer(button, selected) {
+    function checkAnswer() {
       if (answered) return;
-      answered = true;
-      const buttons = document.querySelectorAll('#answers button');
-      buttons.forEach(btn => {
-        const val = parseInt(btn.textContent);
-        if (val === currentCorrectAnswer) {
-          btn.classList.add('correct');
-        } else if (val === selected) {
-          btn.classList.add('incorrect');
-        }
-      });
       
-      if (selected === currentCorrectAnswer) {
+      const userAnswer = parseInt(document.getElementById('answer-input').value);
+      
+      if (isNaN(userAnswer)) {
+        alert('נא להכניס מספר');
+        return;
+      }
+      
+      answered = true;
+      document.getElementById('answer-input').disabled = true;
+      document.getElementById('check-btn').disabled = true;
+      
+      if (userAnswer === currentCorrectAnswer) {
         score++;
         document.getElementById('emoji-face').textContent = '🎉 כל הכבוד!';
-        document.getElementById('feedback').textContent = `נכון! ${selected} הוא התשובה הנכונה.`;
+        document.getElementById('feedback').textContent = `נכון! ${userAnswer} הוא התשובה הנכונה.`;
+        document.getElementById('answer-input').style.borderColor = '#4caf50';
+        document.getElementById('answer-input').style.backgroundColor = '#e8f5e9';
       } else {
         document.getElementById('emoji-face').textContent = '😕 לא נורא';
         document.getElementById('feedback').textContent = `לא נכון. התשובה הנכונה היא ${currentCorrectAnswer}.`;
+        document.getElementById('answer-input').style.borderColor = '#f44336';
+        document.getElementById('answer-input').style.backgroundColor = '#ffebee';
       }
+      
       document.getElementById('next-btn').style.display = 'inline-block';
     }
+
+    // Allow pressing Enter to check answer
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('answer-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          checkAnswer();
+        }
+      });
+    });
 
     function nextQuestion() {
       totalQuestions++;
       updateProgressBar();
+      
+      // Reset input styling
+      document.getElementById('answer-input').style.borderColor = '#ccc';
+      document.getElementById('answer-input').style.backgroundColor = '#fff';
+      
       if (totalQuestions >= MAX_QUESTIONS) {
         showEndScreen();
       } else {
